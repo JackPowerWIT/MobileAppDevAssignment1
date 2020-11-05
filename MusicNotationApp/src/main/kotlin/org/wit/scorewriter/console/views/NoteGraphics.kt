@@ -1,6 +1,7 @@
 package org.wit.scorewriter.console.views
 
 import org.hexworks.zircon.api.CP437TilesetResources
+import org.hexworks.zircon.api.DrawSurfaces
 import org.hexworks.zircon.api.Shapes
 import org.hexworks.zircon.api.builder.graphics.TileCompositeBuilder
 import org.hexworks.zircon.api.color.ANSITileColor
@@ -53,6 +54,12 @@ object NoteGraphics {
             .withCharacter(Symbols.SINGLE_LINE_HORIZONTAL)
             .build()
 
+    private val cursorTile = Tile.newBuilder()
+        .withForegroundColor(ANSITileColor.CYAN)
+        .withBackgroundColor(TileColor.defaultBackgroundColor())
+        .withCharacter(Symbols.BLOCK_SOLID)
+        .build()
+
     // composites
     private val sixteenthNoteUp = TileCompositeBuilder.newBuilder()
             .withSize(Size.create(3,4))
@@ -101,6 +108,12 @@ object NoteGraphics {
             Position.create(3,0))
             .toTileGraphics(ledger,
                     CP437TilesetResources.rexPaint16x16())
+
+    val cursor = Shapes.buildFilledRectangle(
+        Position.zero(),
+        Size.create(3,4))
+        .toTileGraphics(cursorTile,
+            CP437TilesetResources.rexPaint16x16())
 
     // 2D array organised by duration and stem direction
     private val notesStemUp = arrayOf(quarterNoteUp, eigthNoteUp, sixteenthNoteUp)

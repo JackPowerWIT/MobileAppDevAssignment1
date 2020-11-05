@@ -5,22 +5,33 @@ import org.hexworks.zircon.api.ComponentDecorations.box
 import org.hexworks.zircon.api.application.AppConfig
 import org.hexworks.zircon.api.color.ANSITileColor
 import org.hexworks.zircon.api.color.TileColor
-import org.hexworks.zircon.api.component.Container
-import org.hexworks.zircon.api.component.Panel
+import org.hexworks.zircon.api.component.*
+import org.hexworks.zircon.api.component.data.ComponentState
 import org.hexworks.zircon.api.data.Position
 import org.hexworks.zircon.api.data.Size
 import org.hexworks.zircon.api.data.Tile
 import org.hexworks.zircon.api.extensions.toScreen
 import org.hexworks.zircon.api.graphics.*
+import org.hexworks.zircon.api.grid.TileGrid
 import org.hexworks.zircon.api.screen.Screen
+import org.hexworks.zircon.api.uievent.ComponentEventType
+import org.hexworks.zircon.api.uievent.KeyboardEventType
+import org.hexworks.zircon.api.uievent.PreventDefault
+import org.hexworks.zircon.api.uievent.StopPropagation
 import org.wit.scorewriter.console.models.CompositionModel
+import javax.swing.text.Style
 
 class ScorewriterView {
 
+    val tileGrid: TileGrid
+    val scorePanel: Panel
+    val controlPanel: HBox
+    val libraryPanel: VBox
+
     private val screen: Screen
-    private val scorePanel: Panel
     private val ledgerLayer: Layer
     private val noteLayer: Layer
+    private val scoreCursorLayer: Layer
 
     private val STAFF_LENGTH: Int
 
@@ -29,7 +40,7 @@ class ScorewriterView {
     )
 
     init {
-        val tileGrid = SwingApplications.startTileGrid(
+        tileGrid = SwingApplications.startTileGrid(
                 AppConfig.newBuilder()
                         .withSize(76, 40)
                         .withDefaultTileset(CP437TilesetResources.rexPaint16x16())
@@ -38,19 +49,37 @@ class ScorewriterView {
         screen = tileGrid.toScreen()
         screen.theme = ColorThemes.amigaOs()
 
+        // user input style set
+        val inactiveStyle = StyleSet.newBuilder()
+            .withForegroundColor(screen.theme.primaryForegroundColor)
+            .withBackgroundColor(screen.theme.primaryBackgroundColor)
+            .build()
+
+        val activeStyle = StyleSet.newBuilder()
+            .withForegroundColor(ANSITileColor.RED)
+            .withBackgroundColor(screen.theme.primaryBackgroundColor)
+            .build()
+
+        val userInputStyleSet = ComponentStyleSets.newBuilder()
+                .withDefaultStyle(inactiveStyle)
+                .withFocusedStyle(activeStyle)
+                .withMouseOverStyle(activeStyle)
+                .withActiveStyle(activeStyle)
+            .build()
+
         // root
         val root: Container = Components.hbox()
-                .withSize(screen.size.minus(Size.create(2,2)))
-                .withPosition(Position.offset1x1())
-                .build()
+            .withSize(screen.size.minus(Size.create(2,2)))
+            .withPosition(Position.offset1x1())
+            .build()
 
         screen.addComponent(root)
 
         // library
-        val libraryPanel = Components.vbox()
+        libraryPanel = Components.vbox()
                 .withSize(20, root.contentSize.height)
                 .withDecorations(box(BoxType.TOP_BOTTOM_DOUBLE, "Library"))
-                .build()
+            .build()
 
         root.addComponent(libraryPanel)
 
@@ -81,18 +110,38 @@ class ScorewriterView {
 
         screen.addLayer(ledgerLayer)
 
+        // score cursor layer
+        scoreCursorLayer = ledgerLayer.createCopy()
+
+        screen.addLayer(scoreCursorLayer)
+
         // note layer
         noteLayer = ledgerLayer.createCopy()
 
         screen.addLayer(noteLayer)
 
         // controls
-        val controlPanel = Components.hbox()
+        controlPanel = Components.hbox()
                 .withSize(scoreContainer.width, scoreContainer.height - scorePanel.height)
                 .withDecorations(box(BoxType.SINGLE))
                 .build()
 
         scoreContainer.addComponent(controlPanel)
+
+        // some test components
+        val libraryText = Components.textArea()
+            .withText("The Lick")
+            .withComponentStyleSet(userInputStyleSet)
+            .build()
+
+        libraryPanel.addComponent(libraryText)
+
+        val controlText = Components.textArea()
+            .withText("Title:")
+            .withComponentStyleSet(userInputStyleSet)
+            .build()
+
+        controlPanel.addComponent(controlText)
 
         screen.display()
     }
@@ -126,16 +175,22 @@ class ScorewriterView {
         }
     }
 
-    fun drawScore(comp: CompositionModel)
+    fun drawScore(comp: CompositionModel, cursorPos: Int = 0)
     {
+        // clear layers
+        noteLayer.clear()
+        scoreCursorLayer.clear()
+        ledgerLayer.clear()
+
+        // redraw
         var position = 0
 
-        for (note in comp.melody){
-            position += drawNote(note, position)
+        for ((i,note) in comp.melody.withIndex()){
+            position += drawNote(note, position, i == cursorPos)
         }
     }
 
-    fun drawNote(note: CompositionModel.Note, xPos: Int): Int
+    fun drawNote(note: CompositionModel.Note, xPos: Int, isActive: Boolean = false): Int
     {
         val noteGraphic = NoteGraphics.getNoteGraphic(note)
 
@@ -143,12 +198,24 @@ class ScorewriterView {
         var yPos = noteStaffMap[note.name]!! + ((5 - note.octave) * 7)
 
         // check if ledger line needed
-        if (note.name.toString().plus(note.octave) in listOf("C4", "A5", "C6")){
-            ledgerLayer.draw(NoteGraphics.ledgerLine, Position.create(xPos, yPos))
+        if (note.name == 'C' && note.octave == 4){
+            ledgerLayer.draw(NoteGraphics.ledgerLine, Position.create(xPos, 14))
+        }
+        if (note.octave == 5 && note.name in listOf('A', 'B')){
+            ledgerLayer.draw(NoteGraphics.ledgerLine, Position.create(xPos, 2))
+        }
+        if (note.octave == 6){
+            ledgerLayer.draw(NoteGraphics.ledgerLine, Position.create(xPos, 0))
+            ledgerLayer.draw(NoteGraphics.ledgerLine, Position.create(xPos, 2))
         }
 
         // add note head offset
         yPos += NoteGraphics.getNoteHeadOffset(note)
+
+        // check if highlight needed
+        if (isActive){
+            scoreCursorLayer.draw(NoteGraphics.cursor, Position.create(xPos, yPos))
+        }
 
         noteLayer.draw(noteGraphic, Position.create(xPos, yPos))
         return noteGraphic.width
