@@ -1,13 +1,11 @@
 package org.wit.scorewriter.console.views
 
-import kotlinx.coroutines.DisposableHandle
 import org.hexworks.zircon.api.*
 import org.hexworks.zircon.api.ComponentDecorations.box
 import org.hexworks.zircon.api.application.AppConfig
 import org.hexworks.zircon.api.color.ANSITileColor
 import org.hexworks.zircon.api.color.TileColor
 import org.hexworks.zircon.api.component.*
-import org.hexworks.zircon.api.component.data.ComponentState
 import org.hexworks.zircon.api.data.Position
 import org.hexworks.zircon.api.data.Size
 import org.hexworks.zircon.api.data.Tile
@@ -15,10 +13,6 @@ import org.hexworks.zircon.api.extensions.toScreen
 import org.hexworks.zircon.api.graphics.*
 import org.hexworks.zircon.api.grid.TileGrid
 import org.hexworks.zircon.api.screen.Screen
-import org.hexworks.zircon.api.uievent.ComponentEventType
-import org.hexworks.zircon.api.uievent.KeyboardEventType
-import org.hexworks.zircon.api.uievent.PreventDefault
-import org.hexworks.zircon.api.uievent.StopPropagation
 import org.wit.scorewriter.console.models.CompositionModel
 
 class ScorewriterView {

@@ -1,7 +1,6 @@
 package org.wit.scorewriter.console.views
 
 import org.hexworks.zircon.api.CP437TilesetResources
-import org.hexworks.zircon.api.DrawSurfaces
 import org.hexworks.zircon.api.Shapes
 import org.hexworks.zircon.api.builder.graphics.TileCompositeBuilder
 import org.hexworks.zircon.api.color.ANSITileColor

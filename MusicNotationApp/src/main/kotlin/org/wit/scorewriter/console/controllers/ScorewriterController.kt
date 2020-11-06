@@ -22,6 +22,8 @@ class ScorewriterController {
 
     val serialiser = CompositionSerialiser()
 
+    val player: ScorePlayer = ScorePlayer()
+
     fun start()
     {
         addEventHandlers()
@@ -35,42 +37,49 @@ class ScorewriterController {
     fun addEventHandlers()
     {
         view.tileGrid.processKeyboardEvents(KeyboardEventType.KEY_PRESSED) { event, _ ->
+            // handle event only once
+            var handled: Boolean = false
+
             // panel focus switching
             if (event.ctrlDown){
                 activePanel = when(event.code){
                     KeyCode.UP -> {
                         view.clearInputFocus()
                         view.clearUserMessage()
+                        handled = true
                         view.scorePanel
                     }
                     KeyCode.DOWN -> {
-                        activeInputIndex = -1   // always start on first field
-                        activeNoteIndex = -1
+                        // allow event to pass so first input becomes focused
+                        activeInputIndex = -1
                         view.controlPanel
                     }
                     KeyCode.LEFT -> {
                         view.clearInputFocus()
-                        activeNoteIndex = -1
+                        activeNoteIndex = 0
                         view.libraryPanel
                     }
                     KeyCode.RIGHT -> {
                         view.clearInputFocus()
                         view.clearUserMessage()
+                        handled = true
                         view.scorePanel
                     }
                     else -> activePanel
                 }
             }
 
-            when (activePanel){
-                view.scorePanel -> {
-                    scorePanelKeyHandler(event)
-                }
-                view.controlPanel -> {
-                    controlPanelKeyHandler(event)
-                }
-                view.libraryPanel -> {
-                    libraryPanelKeyHandler(event)
+            if (!handled) {
+                when (activePanel) {
+                    view.scorePanel -> {
+                        scorePanelKeyHandler(event)
+                    }
+                    view.controlPanel -> {
+                        controlPanelKeyHandler(event)
+                    }
+                    view.libraryPanel -> {
+                        libraryPanelKeyHandler(event)
+                    }
                 }
             }
         }
@@ -91,6 +100,7 @@ class ScorewriterController {
             KeyCode.DIGIT_4 -> melody[activeNoteIndex].duration = 4
             KeyCode.DIGIT_8 -> melody[activeNoteIndex].duration = 8
             KeyCode.DIGIT_6 -> melody[activeNoteIndex].duration = 16
+            KeyCode.KEY_P -> player.play(composition)
             else -> return
         }
 

@@ -35,7 +35,7 @@
         "name": "C",
         "octave": 4,
         "isSharp": false,
-        "duration": 16
+        "duration": 8
       },
       {
         "name": "D",
@@ -83,7 +83,7 @@
     ],
     "title": "Giant Steps",
     "artist": "John Coltrane",
-    "bpm": 148
+    "bpm": 72
   },
   {
     "melody": [
@@ -124,7 +124,7 @@
         "duration": 8
       }
     ],
-    "title": "A-Train",
+    "title": "Take the A-Train",
     "artist": "Duke Ellington",
     "bpm": 120
   }
