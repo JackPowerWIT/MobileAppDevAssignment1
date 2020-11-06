@@ -15,7 +15,7 @@ class ScorewriterController {
     var activePanel: Container = view.scorePanel
     // the active elements within each panel
     var activeNoteIndex: Int = 0
-    var activeInfoIndex: Int = 0
+    var activeInputIndex: Int = -1
     var activeCompositionIndex: Int = 0
 
     fun start()
@@ -31,10 +31,19 @@ class ScorewriterController {
             // panel focus switching
             if (event.ctrlDown){
                 activePanel = when(event.code){
-                    KeyCode.UP -> view.scorePanel
+                    KeyCode.UP -> {
+                        view.clearInputFocus()
+                        view.scorePanel
+                    }
                     KeyCode.DOWN -> view.controlPanel
-                    KeyCode.LEFT -> view.libraryPanel
-                    KeyCode.RIGHT -> view.scorePanel
+                    KeyCode.LEFT -> {
+                        view.clearInputFocus()
+                        view.libraryPanel
+                    }
+                    KeyCode.RIGHT -> {
+                        view.clearInputFocus()
+                        view.scorePanel
+                    }
                     else -> activePanel
                 }
             }
@@ -46,6 +55,7 @@ class ScorewriterController {
                 }
                 view.controlPanel -> {
                     println("moving in controls")
+                    controlPanelKeyHandler(event)
                 }
                 view.libraryPanel -> {
                     println("moving in library")
@@ -66,6 +76,16 @@ class ScorewriterController {
         }
 
         view.drawScore(composition, activeNoteIndex)
+    }
+
+    fun controlPanelKeyHandler(event: KeyboardEvent)
+    {
+        when (event.code){
+            KeyCode.UP -> if (activeInputIndex > 0) activeInputIndex--
+            KeyCode.DOWN -> if (activeInputIndex < 2) activeInputIndex++
+        }
+
+        view.focusInput(activeInputIndex)
     }
 
     fun raisePitch(note: CompositionModel.Note)
@@ -102,10 +122,6 @@ class ScorewriterController {
         }
     }
 
-    fun controlPanelKeyHandler(event: KeyboardEvent)
-    {
-
-    }
 
     fun libraryPanelKeyHandler(event: KeyboardEvent)
     {

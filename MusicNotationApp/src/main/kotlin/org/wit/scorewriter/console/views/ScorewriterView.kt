@@ -19,13 +19,12 @@ import org.hexworks.zircon.api.uievent.KeyboardEventType
 import org.hexworks.zircon.api.uievent.PreventDefault
 import org.hexworks.zircon.api.uievent.StopPropagation
 import org.wit.scorewriter.console.models.CompositionModel
-import javax.swing.text.Style
 
 class ScorewriterView {
 
     val tileGrid: TileGrid
     val scorePanel: Panel
-    val controlPanel: HBox
+    val controlPanel: VBox
     val libraryPanel: VBox
 
     private val screen: Screen
@@ -48,24 +47,6 @@ class ScorewriterView {
 
         screen = tileGrid.toScreen()
         screen.theme = ColorThemes.amigaOs()
-
-        // user input style set
-        val inactiveStyle = StyleSet.newBuilder()
-            .withForegroundColor(screen.theme.primaryForegroundColor)
-            .withBackgroundColor(screen.theme.primaryBackgroundColor)
-            .build()
-
-        val activeStyle = StyleSet.newBuilder()
-            .withForegroundColor(ANSITileColor.RED)
-            .withBackgroundColor(screen.theme.primaryBackgroundColor)
-            .build()
-
-        val userInputStyleSet = ComponentStyleSets.newBuilder()
-                .withDefaultStyle(inactiveStyle)
-                .withFocusedStyle(activeStyle)
-                .withMouseOverStyle(activeStyle)
-                .withActiveStyle(activeStyle)
-            .build()
 
         // root
         val root: Container = Components.hbox()
@@ -121,27 +102,72 @@ class ScorewriterView {
         screen.addLayer(noteLayer)
 
         // controls
-        controlPanel = Components.hbox()
-                .withSize(scoreContainer.width, scoreContainer.height - scorePanel.height)
-                .withDecorations(box(BoxType.SINGLE))
-                .build()
+        controlPanel = Components.vbox()
+            .withSize(scoreContainer.width, scoreContainer.height - scorePanel.height)
+            .withSpacing(1)
+            .withDecorations(box(BoxType.SINGLE))
+            .build()
 
         scoreContainer.addComponent(controlPanel)
 
-        // some test components
-        val libraryText = Components.textArea()
-            .withText("The Lick")
-            .withComponentStyleSet(userInputStyleSet)
+        // title
+        val titleLabel = Components.label()
+            .withText(" Title:  ")
             .build()
 
-        libraryPanel.addComponent(libraryText)
-
-        val controlText = Components.textArea()
-            .withText("Title:")
-            .withComponentStyleSet(userInputStyleSet)
+        val titleInput = Components.textArea()
+            .withSize(30,1)
             .build()
 
-        controlPanel.addComponent(controlText)
+        val titleBox = Components.hbox()
+            .withSize(controlPanel.width - 8,1)
+            .build()
+
+        titleBox.addComponent(titleLabel)
+        titleBox.addComponent(titleInput)
+
+        // artist
+        val artistLabel = Components.label()
+            .withText(" Artist: ")
+            .build()
+
+        val artistInput = Components.textArea()
+            .withSize(30,1)
+            .build()
+
+        val artistBox = Components.hbox()
+            .withSize(controlPanel.width - 8,1)
+            .build()
+
+        artistBox.addComponent(artistLabel)
+        artistBox.addComponent(artistInput)
+
+        // bpm
+        val bpmLabel = Components.label()
+            .withText("BPM:    ")
+            .build()
+
+        val bpmInput = Components.textArea()
+            .withSize(30,1)
+            .build()
+
+        val bpmBox = Components.hbox()
+            .withSize(controlPanel.width - 8,1)
+            .build()
+
+        // invisible component to take focus away
+        // since Component.clearFocus() doesn't work
+        val invisBtn = Components.toggleButton()
+            .withSize(1,1)
+            .build()
+
+        bpmBox.addComponent(invisBtn)
+        bpmBox.addComponent(bpmLabel)
+        bpmBox.addComponent(bpmInput)
+
+        controlPanel.addComponent(titleBox)
+        controlPanel.addComponent(artistBox)
+        controlPanel.addComponent(bpmBox)
 
         screen.display()
     }
@@ -219,5 +245,20 @@ class ScorewriterView {
 
         noteLayer.draw(noteGraphic, Position.create(xPos, yPos))
         return noteGraphic.width
+    }
+
+    fun focusInput(index: Int)
+    {
+        if (index in 0..2) {
+            val inputs = controlPanel.children.map { (it as HBox).children.last() }
+
+            inputs[index].requestFocus()
+        }
+    }
+
+    fun clearInputFocus()
+    {
+        val throwaway = (controlPanel.children.last() as HBox).children.first()
+        throwaway.requestFocus()
     }
 }
