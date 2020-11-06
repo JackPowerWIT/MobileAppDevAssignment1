@@ -4,6 +4,7 @@ import org.hexworks.zircon.api.component.Container
 import org.hexworks.zircon.api.uievent.*
 import org.wit.scorewriter.console.views.ScorewriterView
 import org.wit.scorewriter.console.models.CompositionModel
+import java.lang.Exception
 
 class ScorewriterController {
 
@@ -16,13 +17,15 @@ class ScorewriterController {
     // the active elements within each panel
     var activeNoteIndex: Int = 0
     var activeInputIndex: Int = -1
-    var activeCompositionIndex: Int = 0
+    var activeLibraryIndex: Int = 0
 
     fun start()
     {
         addEventHandlers()
         insertDummyData()
-        view.drawScore(compositions[0])
+        view.drawLibrary(compositions, activeLibraryIndex)
+        view.drawScore(compositions[activeLibraryIndex])
+        view.populateInputs(compositions[activeLibraryIndex])
     }
 
     fun addEventHandlers()
@@ -33,15 +36,22 @@ class ScorewriterController {
                 activePanel = when(event.code){
                     KeyCode.UP -> {
                         view.clearInputFocus()
+                        view.clearUserMessage()
                         view.scorePanel
                     }
-                    KeyCode.DOWN -> view.controlPanel
+                    KeyCode.DOWN -> {
+                        activeInputIndex = -1   // always start on first field
+                        activeNoteIndex = -1
+                        view.controlPanel
+                    }
                     KeyCode.LEFT -> {
                         view.clearInputFocus()
+                        activeNoteIndex = -1
                         view.libraryPanel
                     }
                     KeyCode.RIGHT -> {
                         view.clearInputFocus()
+                        view.clearUserMessage()
                         view.scorePanel
                     }
                     else -> activePanel
@@ -50,15 +60,13 @@ class ScorewriterController {
 
             when (activePanel){
                 view.scorePanel -> {
-                    println("moving in score")
                     scorePanelKeyHandler(event)
                 }
                 view.controlPanel -> {
-                    println("moving in controls")
                     controlPanelKeyHandler(event)
                 }
                 view.libraryPanel -> {
-                    println("moving in library")
+                    libraryPanelKeyHandler(event)
                 }
             }
         }
@@ -66,13 +74,20 @@ class ScorewriterController {
 
     fun scorePanelKeyHandler(event: KeyboardEvent)
     {
-        val composition = compositions[activeCompositionIndex]
+        val composition = compositions[activeLibraryIndex]
+        val melody = composition.melody
 
         when (event.code){
             KeyCode.LEFT -> if (activeNoteIndex > 0) activeNoteIndex--
-            KeyCode.RIGHT -> if (activeNoteIndex < composition.melody.size-1) activeNoteIndex++
-            KeyCode.UP -> raisePitch(composition.melody[activeNoteIndex])
-            KeyCode.DOWN -> lowerPitch(composition.melody[activeNoteIndex])
+            KeyCode.RIGHT -> if (activeNoteIndex < melody.size-1) activeNoteIndex++
+            KeyCode.UP -> raisePitch(melody[activeNoteIndex])
+            KeyCode.DOWN -> lowerPitch(melody[activeNoteIndex])
+            KeyCode.KEY_A -> melody.add(activeNoteIndex + 1, composition.Note())
+            KeyCode.KEY_X -> if (melody.size > 1) melody.removeAt(activeNoteIndex)
+            KeyCode.DIGIT_4 -> melody[activeNoteIndex].duration = 4
+            KeyCode.DIGIT_8 -> melody[activeNoteIndex].duration = 8
+            KeyCode.DIGIT_6 -> melody[activeNoteIndex].duration = 16
+            else -> return
         }
 
         view.drawScore(composition, activeNoteIndex)
@@ -83,9 +98,30 @@ class ScorewriterController {
         when (event.code){
             KeyCode.UP -> if (activeInputIndex > 0) activeInputIndex--
             KeyCode.DOWN -> if (activeInputIndex < 2) activeInputIndex++
+            else -> return
         }
 
         view.focusInput(activeInputIndex)
+    }
+
+    fun libraryPanelKeyHandler(event: KeyboardEvent)
+    {
+        when (event.code){
+            KeyCode.UP -> if (activeLibraryIndex > 0){
+                activeLibraryIndex--
+            }
+            KeyCode.DOWN -> if (activeLibraryIndex < compositions.size-1){
+                activeLibraryIndex++
+            }
+            KeyCode.KEY_S -> saveData()
+            KeyCode.KEY_N -> newScore()
+            KeyCode.KEY_X -> deleteScore()
+            else -> return
+        }
+
+        view.drawLibrary(compositions, activeLibraryIndex)
+        view.drawScore(compositions[activeLibraryIndex], activeNoteIndex)
+        view.populateInputs(compositions[activeLibraryIndex])
     }
 
     fun raisePitch(note: CompositionModel.Note)
@@ -122,19 +158,90 @@ class ScorewriterController {
         }
     }
 
-
-    fun libraryPanelKeyHandler(event: KeyboardEvent)
+    fun newScore()
     {
+        if (compositions.size < 8) {
+            val newComp = CompositionModel("New Score")
+            newComp.insertNote(newComp.Note('B', 4))
+            compositions.add(newComp)
+            activeLibraryIndex = compositions.size - 1
+        }
+    }
 
+    fun deleteScore()
+    {
+        if (compositions.size > 1){
+            compositions.removeAt(activeLibraryIndex)
+            if (activeLibraryIndex == compositions.size){
+                activeLibraryIndex--
+            }
+        }
+    }
+
+    fun saveData()
+    {
+        val composition = compositions[activeLibraryIndex]
+        try {
+            val bpmValue = view.bpmInput.text.toInt()
+            if (bpmValue > 0) {
+                composition.bpm = bpmValue
+            }
+            else {
+                throw Exception()
+            }
+        }
+        catch (e: Exception){
+            view.writeMessage(
+                    // newline escape doesn't work for some reason
+                    "BPM must be a     " +
+                    "positive number.")
+            return
+        }
+        val titleString = view.titleInput.text
+        if (titleString.isNotEmpty()){
+            composition.title = titleString
+        }
+        else {
+            view.writeMessage(
+                    "Title cannot be   " +
+                    "empty.")
+            return
+        }
+        val artistString = view.artistInput.text
+        if (artistString.isNotEmpty()){
+            composition.artist = artistString
+        }
+        else {
+            view.writeMessage(
+                "Artist cannot be  " +
+                     "empty.")
+            return
+        }
+        view.writeMessage("Data saved.")
     }
 
     fun insertDummyData()
     {
         val myComp = CompositionModel("The Lick")
-        val notes = listOf("D4", "E4", "F4", "G4" , "E4", "C4", "D4",)
+        var notes = listOf("D4", "E4", "F4", "G4" , "E4", "C4", "D4",)
         notes.forEach {
             myComp.insertNote(myComp.Note(it[0], it[1].toString().toInt()))
         }
         compositions.add(myComp)
+
+
+        val myComp2 = CompositionModel("Giant Steps")
+        notes = listOf("F5", "D5", "B4", "G4", "B5")
+        notes.forEach {
+            myComp2.insertNote(myComp.Note(it[0], it[1].toString().toInt()))
+        }
+        compositions.add(myComp2)
+
+        val myComp3 = CompositionModel("A-Train")
+        notes = listOf("G4", "E5", "G4", "C5" , "E5", "G4")
+        notes.forEach {
+            myComp3.insertNote(myComp.Note(it[0], it[1].toString().toInt()))
+        }
+        compositions.add(myComp3)
     }
 }

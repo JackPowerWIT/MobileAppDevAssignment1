@@ -8,8 +8,8 @@ class CompositionModel(
     val melody: MutableList<Note> = mutableListOf<Note>()
 
     inner class Note(
-        var name: Char,
-        var octave: Int,
+        var name: Char = 'B',
+        var octave: Int = 4,
         var isSharp: Boolean = false,
         var duration: Int = 8
     ){ }

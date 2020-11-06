@@ -1,5 +1,6 @@
 package org.wit.scorewriter.console.views
 
+import kotlinx.coroutines.DisposableHandle
 import org.hexworks.zircon.api.*
 import org.hexworks.zircon.api.ComponentDecorations.box
 import org.hexworks.zircon.api.application.AppConfig
@@ -27,10 +28,19 @@ class ScorewriterView {
     val controlPanel: VBox
     val libraryPanel: VBox
 
+    // user input fields
+    // TextAreas since TextBox doesn't
+    // seem to take focus correctly
+    val titleInput: TextArea
+    val artistInput: TextArea
+    val bpmInput: TextArea
+
     private val screen: Screen
     private val ledgerLayer: Layer
     private val noteLayer: Layer
     private val scoreCursorLayer: Layer
+
+    private val userMsg: Label
 
     private val STAFF_LENGTH: Int
 
@@ -57,12 +67,25 @@ class ScorewriterView {
         screen.addComponent(root)
 
         // library
-        libraryPanel = Components.vbox()
+        val libraryContainer = Components.vbox()
                 .withSize(20, root.contentSize.height)
-                .withDecorations(box(BoxType.TOP_BOTTOM_DOUBLE, "Library"))
+                .build()
+
+        libraryPanel = Components.vbox()
+            .withDecorations(box(BoxType.TOP_BOTTOM_DOUBLE, "Library"))
+            .withSize(20, root.contentSize.height-8)
             .build()
 
-        root.addComponent(libraryPanel)
+        libraryContainer.addComponent(libraryPanel)
+
+        // message to user
+        userMsg = Components.label()
+                .withSize(18, 7)
+                .withPosition(Position.offset1x1())
+                .build()
+
+        libraryContainer.addComponent(userMsg)
+        root.addComponent(libraryContainer)
 
         // editor
         val scoreContainer = Components.vbox()
@@ -115,7 +138,7 @@ class ScorewriterView {
             .withText(" Title:  ")
             .build()
 
-        val titleInput = Components.textArea()
+        titleInput = Components.textArea()
             .withSize(30,1)
             .build()
 
@@ -131,7 +154,7 @@ class ScorewriterView {
             .withText(" Artist: ")
             .build()
 
-        val artistInput = Components.textArea()
+        artistInput = Components.textArea()
             .withSize(30,1)
             .build()
 
@@ -147,7 +170,7 @@ class ScorewriterView {
             .withText("BPM:    ")
             .build()
 
-        val bpmInput = Components.textArea()
+        bpmInput = Components.textArea()
             .withSize(30,1)
             .build()
 
@@ -247,9 +270,48 @@ class ScorewriterView {
         return noteGraphic.width
     }
 
+    fun drawLibrary(compositions: List<CompositionModel>, activeItem: Int)
+    {
+        libraryPanel.clear()
+
+        for ((i,comp) in compositions.withIndex()){
+            val item = Components.label()
+                .withText(comp.title)
+
+            if (i == activeItem){
+                item.withSize(libraryPanel.width - 4,4)
+                    .withDecorations(box(BoxType.SINGLE))
+            }
+            else {
+                item.withSize(libraryPanel.width - 4,3)
+                    .withPosition(1,0)
+            }
+
+            item.build()
+
+            libraryPanel.addComponent(item)
+        }
+    }
+
+    fun populateInputs(composition: CompositionModel)
+    {
+        titleInput.text = composition.title
+        artistInput.text = composition.artist
+        bpmInput.text = composition.bpm.toString()
+    }
+
+    fun writeMessage(msg: String){
+        userMsg.text = msg
+    }
+
+    fun clearUserMessage(){
+        writeMessage("")
+    }
+
     fun focusInput(index: Int)
     {
         if (index in 0..2) {
+            // get list of input fields
             val inputs = controlPanel.children.map { (it as HBox).children.last() }
 
             inputs[index].requestFocus()
