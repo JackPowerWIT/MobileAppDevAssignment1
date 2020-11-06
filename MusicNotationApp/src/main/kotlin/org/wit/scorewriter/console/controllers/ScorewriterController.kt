@@ -4,6 +4,7 @@ import org.hexworks.zircon.api.component.Container
 import org.hexworks.zircon.api.uievent.*
 import org.wit.scorewriter.console.views.ScorewriterView
 import org.wit.scorewriter.console.models.CompositionModel
+import org.wit.scorewriter.console.models.CompositionSerialiser
 import java.lang.Exception
 
 class ScorewriterController {
@@ -19,10 +20,13 @@ class ScorewriterController {
     var activeInputIndex: Int = -1
     var activeLibraryIndex: Int = 0
 
+    val serialiser = CompositionSerialiser()
+
     fun start()
     {
         addEventHandlers()
-        insertDummyData()
+        //insertDummyData()
+        compositions.addAll(serialiser.deserialise())
         view.drawLibrary(compositions, activeLibraryIndex)
         view.drawScore(compositions[activeLibraryIndex])
         view.populateInputs(compositions[activeLibraryIndex])
@@ -217,9 +221,16 @@ class ScorewriterController {
                      "empty.")
             return
         }
-        view.writeMessage("Data saved.")
+        val result = if (serialiser.serialise(compositions)){
+            "Data saved."
+        }
+        else {
+            "Error saving data."
+        }
+        view.writeMessage(result)
     }
 
+    /*
     fun insertDummyData()
     {
         val myComp = CompositionModel("The Lick")
@@ -228,7 +239,6 @@ class ScorewriterController {
             myComp.insertNote(myComp.Note(it[0], it[1].toString().toInt()))
         }
         compositions.add(myComp)
-
 
         val myComp2 = CompositionModel("Giant Steps")
         notes = listOf("F5", "D5", "B4", "G4", "B5")
@@ -244,4 +254,5 @@ class ScorewriterController {
         }
         compositions.add(myComp3)
     }
+     */
 }

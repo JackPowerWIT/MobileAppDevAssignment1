@@ -1,0 +1,131 @@
+[
+  {
+    "melody": [
+      {
+        "name": "D",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "E",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "F",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "G",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "E",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 4
+      },
+      {
+        "name": "C",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 16
+      },
+      {
+        "name": "D",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 4
+      }
+    ],
+    "title": "The Lick",
+    "artist": "Unknown",
+    "bpm": 120
+  },
+  {
+    "melody": [
+      {
+        "name": "F",
+        "octave": 5,
+        "isSharp": true,
+        "duration": 8
+      },
+      {
+        "name": "D",
+        "octave": 5,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "B",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "G",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "A",
+        "octave": 4,
+        "isSharp": true,
+        "duration": 4
+      }
+    ],
+    "title": "Giant Steps",
+    "artist": "John Coltrane",
+    "bpm": 148
+  },
+  {
+    "melody": [
+      {
+        "name": "G",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 4
+      },
+      {
+        "name": "E",
+        "octave": 5,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "G",
+        "octave": 4,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "C",
+        "octave": 5,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "E",
+        "octave": 5,
+        "isSharp": false,
+        "duration": 8
+      },
+      {
+        "name": "G",
+        "octave": 4,
+        "isSharp": true,
+        "duration": 8
+      }
+    ],
+    "title": "A-Train",
+    "artist": "Duke Ellington",
+    "bpm": 120
+  }
+]
